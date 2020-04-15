@@ -9,6 +9,7 @@ function Parser () {}
 Parser.prototype.parse = function ($) {
   let ingredients = $('li[class*="ingredients"]');
   const url = $('meta[property="og:url"]').prop('content');
+  // console.log(`parsing ${url}`)
   let ret = [];
   ingredients.each(function () {
     ret.push($(this).text().trim())
@@ -25,9 +26,9 @@ Parser.prototype.parse = function ($) {
     return ret;
   }
 
-  const regex = /([\u00BC-\u00BE\u2150-\u215E]\s)?(\d*\/?\d*\s)?(\d+\/\d+\s|[\u00BC-\u00BE\u2150-\u215E]\s)?(\(\d*\.?\d*\sf?l?u?i?d?\s?ounce\)\s|\(\d+\.?\d*.*\spound\)\s|\(\d+\.?\d*\sinch\)\s|\(?\d*\sliter\)?\s|\(?\d*\smilliliter\)?\s)?(cups?|tablespoons?|teaspoons?|can\sor\sbottle|f?l?u?i?d?\s?ounces?|cans?|cloves?|pounds?|packages?|bottles?|slices?|cubes?|containers?|fillets?|dashs?|drops?|cuts?|ears?|\S{1,}?\s?heads?|heads?|splashs?|dollops?|loaf?v?e?s?|envelopes?|stalks?|pints?|quarts?|liters?|gallons?|jars?|bars?|bunche?s?|bags?|individual\spackets?|packets?|squares?|boxe?s?|sprigs?|pinche?s?)?(.+)/;
+  const regex = /([\u00BC-\u00BE\u2150-\u215E]\s)?(\d*\/?\d*\s)?(\d+\/\d+\s|[\u00BC-\u00BE\u2150-\u215E]\s)?(\(\d*\.?\d*\sf?l?u?i?d?\s?ounce\)\s|\(\d+\.?\d*.*\spound\)\s|\(\d+\.?\d*\sinch\)\s|\(?\d*\sliter\)?\s|\(?\d*\smilliliter\)?\s)?(cups?|tablespoons?|teaspoons?|can\sor\sbottle|f?l?u?i?d?\s?ounces?|cans?|cloves?|pounds?|packages?|bottles?|slices?d?|cubes?|containers?|fillets?|dashs?|drops?|cuts?|ears?|\S{1,}?\s?heads?|heads?|splashs?|dollops?|loaf?v?e?s?|envelopes?|stalks?|pints?|quarts?|liters?|gallons?|jars?|bars?|bunche?s?|bags?|individual\spackets?|packets?|squares?|boxe?s?|sprigs?|pinche?s?)?(.+)/;
 
-  const ingReg = /minced|diced|,|,?\sor\sto\staste|\bto\staste|fresh\sor\sfrozen|freshl?y?|shredded|divided|melted|grated|roughl?y?|chopped|cut\sinto|\d|strips|halve[ds]?|\bfor\sgarnish|u?n?peeled|deveined|-?\binch\b|pieces?d?|cubed?s?|light\sand\sdark|crumbled|skin\sand\sbones|skinless|seedless|boneless|slice[ds]?|thawed|cold|\bhot\b[^sauce]|\bwarme?d?\b|lukewarm|\broom\b|temperature|w?e?l?l?\s?beaten|removed|,?\s\or\smore\s\S{2,}\sneeded|giblets\bremoved|leaves\sremoved|thinl?y?|wedges?d?|u?n?drained|rinsed|torn|\binto\b|refrigerated|finely|softened|cored|mashed|\s[-]-?\s?|cleane?d?|scrubbed|\bnew\b|small|large|fillets?|-x|horizontall?y?|verticall?y?|packed|\blightl?y?|seeded|unsalted|frozen|split|hard-cooked|lengthwise|quartered|crushed|\/|separated|degrees\s[CF]|\(|\)|tough stems|bulk|chunky?s?|meat\b|pounded|u?n?cooked|pitted|for\scoating|thickl?y?|toasted|juiced|medium|for\sd?e?e?p?\s?frying|trimmed|coarse-?l?y?|plus\smore|for\stopping|or\ssauce|blanched|slivered|assorted|thirds|cut\sin|half|bite-sized?|bite\ssized?|chilled|or\sas\sneeded|or\smore|or\senough.*|with\sskin|ounce|portions|for\sdecoration|such\sas.*|e\.g\..*|white\sparts.*|heated|with\sliquid|zested|u?n?baked|with\sjuice|plain|prepared|shelled|\braw\b|with\stails.*|without\stails|sifted|squeezed\sdry|squeezed|as\sneeded|hulled|washed|distilled|boiling|bone-in\s|creamy|crunchy|your\sfavorite|coole?d?|miniature|mini|whole|spear|baby|kernels?|very|\bover|ripe|canned|mixed|flaked|slender|diagonal|matchstick-?c?u?t?|\bcut\son\b|\bextra\b|\bat\b|\blean\b|u?n?popped|if\sneeded|strips?p?e?d?|julienned|pressed|ready-to-eat|\b\S+\sreserved|reserved|for\sgreasing\span|nonfat|low-?\s?sodium|low-?\s?fat|\blite\b|the\sliquid|firm|dissolved.*|\bor\s{2,}|for\sdusting|florets?|boiled|for\sbrushing|broken\sup|frenched|broken|marinated|in\sfreezer|for\sdredging|crosswise|granules?|slightl?y?|smooth|jumbo|russet/gi;
+  const ingReg = /minced|diced|,|,?\sor\sto\staste|\bto\staste|fresh\sor\sfrozen|freshl?y?|shredded|divided|or\sa\sdesired|melted|grated|roughl?y?|chopped|cut\sinto|\d|strips|halve[ds]?|\bfor\sgarnish|u?n?peeled|deveined|-?\binch\b|pieces?d?|cubed?s?|light\sand\sdark|crumbled|skin\sand\sbones|skinless|seedless|boneless|sliced?s?|thawed|cold|\bhot\b[^sauce]|\bwarme?d?\b|lukewarm|\broom\b|temperature|w?e?l?l?\s?beaten|removed|,?\s\or\smore\s\S{2,}\sneeded|giblets\bremoved|leaves\sremoved|thinl?y?|wedges?d?|u?n?drained|rinsed|torn|\binto\b|refrigerated|finely|softened|cored|mashed|\s[-]-?\s?|cleane?d?|scrubbed|\bnew\b|small|large|fillets?|-x|horizontall?y?|verticall?y?|packed|\blightl?y?|seeded|unsalted|frozen|split|hard-cooked|lengthwise|quartered|crushed|\/|separated|degrees\s[CF]|\(|\)|tough stems|bulk|chunky?s?|meat\b|pounded|u?n?cooked|pitted|for\scoating|thickl?y?-?|toasted|juiced|medium|for\sd?e?e?p?\s?frying|trimmed|coarse-?l?y?|plus\smore|for\stopping|or\ssauce|blanched|slivered|assorted|thirds|cut\sin|half|bite-sized?|bite\ssized?|chilled|or\sas\sneeded|or\smore|or\senough.*|with\sskin|ounce|portions|for\sdecoration|such\sas.*|e\.g\..*|white\sparts.*|heated|with\sliquid|zested|u?n?baked|with\sjuice|plain|prepared|shelled|\braw\b|with\stails.*|without\stails|sifted|squeezed\sdry|squeezed|as\sneeded|hulled|washed|distilled|boiling|bone-in\s|creamy|crunchy|your\sfavorite|coole?d?|miniature|mini|whole|spear|baby|kernels?|very|\bover|ripe|canned|mixed|cut|flaked|slender|diagonal|matchstick-?c?u?t?|\bcut\son\b|\bextra\b-?|\bat\b|\blean\b|u?n?popped|if\sneeded|strips?p?e?d?|julienned|pressed|ready-to-eat|\b\S+\sreserved|reserved|for\sgreasing\span|nonfat|low-?\s?sodium|low-?\s?fat|\blite\b|the\sliquid|firm|dissolved.*|\bor\s{2,}|\bor\s?$|for\sdusting|florets?|boiled|for\sbrushing|broken\sup|frenched|broken|marinated|in\sfreezer|for\sdredging|crosswise|granules?|slightl?y?|smooth|jumbo|russet/gi;
 
   const andReg = /^\s*and\s{1,}|\s*and\s{1,}$/gi;
 
@@ -79,7 +80,9 @@ Parser.prototype.parse = function ($) {
   const badParses = [
     /^cut/,
     /^package/,
-    /d\savocado/
+    /d\savocado/,
+    /garlic\sclove\s/,
+    /^-/
   ]
 
   const spaceNormalizer = /\s{2,}/;
