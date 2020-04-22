@@ -43,29 +43,21 @@ Trie.prototype.addRecipe = function (url, ingredients) {
  * @returns {string[]} should be an array of all the recipes you have enough ingredients for.
  */
 Trie.prototype.findRecipesByIngredients = function (ingredients) {
-  let recipes = [];
-  ingredients.sort();
-  for (let i = 0; i < ingredients.length - 1; i++) {
-    recipes = this._recursiveFind(ingredients.slice(i), recipes);
+  let recipes = []
+  const nodesToSearch = new Queue()
+  nodesToSearch.push(this.root)
+  while (!nodesToSearch.isEmpty()) {
+    let currentNode = nodesToSearch.pop()
+    recipes = recipes.concat(currentNode.recipes)
+    for (let i of ingredients) {
+      if (currentNode.children.has(i)) {
+        nodesToSearch.push(currentNode.children.get(i))
+      }
+    }
   }
   return recipes;
 }
 
-Trie.prototype._recursiveFind = function (ingredients, foundRecipes = []) {
-  // assumes ingredients have already been sorted.
-  const q = new Queue();
-  ingredients.forEach(i => q.push(i));
-  let currentNode = this.root;
-  while (!q.isEmpty()) {
-    let ing = q.pop();
-    if (!currentNode.children.has(ing)) {
-      break;
-    }
-    foundRecipes = foundRecipes.concat(currentNode.recipes);
-    currentNode = currentNode.children.get(ing);
-  }
-  return foundRecipes.concat(currentNode.recipes);
-}
 
 Trie.prototype.print = function () {
   let q = new Queue();

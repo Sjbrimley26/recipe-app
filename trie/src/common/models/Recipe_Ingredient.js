@@ -21,9 +21,12 @@ const create = async (recipe, items) => {
 
 const renameIngredient = async (oldName, newName) => {
   try {
-    const revision = knex(TABLE_NAME).where({ ingredient: oldName }).update({ ingredient: newName })
-    const deletion = Ingredient.delete(oldName)
-    await Promise.all([ revision, deletion ])
+    const existing = await Ingredient.has(newName)
+    if (!existing) {
+      await Ingredient.create(newName)
+    }
+    await knex(TABLE_NAME).where({ ingredient: oldName }).update({ ingredient: newName })
+    await Ingredient.delete(oldName)
     return true;
   }
   catch (err) {

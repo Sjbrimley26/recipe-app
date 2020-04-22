@@ -1,0 +1,12 @@
+Cheddar cheese is being mapped to "" (or " "?) -> every recipe has it, stored at root?
+French bread too?
+Parmesan cheese too <--- I think I must've set a pattern for capitalized words at some point
+Brussels sprouts
+low fat, reduced fat, no fat
+ground (spices)
+leaf (basil vs basil leaf)
+
+
+make renaming dyanimc, so future parses will correct it -> add to duplicateReplcaments array
+duplicateReplacements will have to become a postgres table
+can use string matching instead of regex? -> save regex on postgres

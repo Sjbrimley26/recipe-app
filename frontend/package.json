@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "parcel src/index.html",
-    "build": "parcel build index.html",
+    "build": "parcel build index.html admin.html",
+    "build:local": "parcel build src/index.html src/admin.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Spencer Brimley",

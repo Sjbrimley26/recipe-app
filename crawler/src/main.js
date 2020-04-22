@@ -1,9 +1,17 @@
+require('dotenv').config()
+if (process.env.MODE === 'PAUSED') {
+  return process.exit(0);
+}
 const axios = require('axios')
 const cheerio = require('cheerio')
 const Crawler = require("./Crawler")
 const Parser = require("./Parser")
 const { Recipe, Ingredient, Recipe_Ingredient, Store } = require('./common/models')
 const { knex } = require('./common/config');
+
+const sum = arr => arr.reduce((total, val) => total + val)
+
+const mean = arr => sum(arr) / arr.length
 
 /*
   TODO:
@@ -16,7 +24,7 @@ const { knex } = require('./common/config');
 */
 
 const crawler = new Crawler({
-  maxCallsPerMinute: 60,
+  maxCallsPerMinute: 120,
   maxNumberofConnections: 1
 })
 
@@ -30,6 +38,8 @@ function errorHandler(err) {
   console.error(err.message)
 }
 
+const laps = [];
+
 async function init() {
   try  {
     let crawlInProgress = await Store.has('latest_read_page');
@@ -40,33 +50,48 @@ async function init() {
     const dbChecks = await Promise.all([ Ingredient.all(), Recipe.all() ])
     const existingIngredients = dbChecks[0].map(i => i.item)
     const alreadyParsedUrls = dbChecks[1].map(i => i.url)
-  
+    let recipesParsed = alreadyParsedUrls.length;
     const dups = new Set()
     existingIngredients.forEach(i => dups.add(i))
 
     let timer = Date.now();
 
     crawler.on("crawled", async function (url, $) {
-      const ingredients = parser.parse($);
+      const { ingredients, description, image, title } = parser.parse($);
+      // NEED TO COMPLETE REFACTORING THE PARSER AND MODELS
       const items = []; // ingredients minus the quantities
       ingredients.forEach(async ([qty, ing]) => {
         items.push(ing);
         if (dups.has(ing)) {
           return;
-        }
+        } 
         dups.add(ing);
         await Ingredient.create(ing)  
       })
 
-      await Recipe.create(url)
+      const created = await Recipe.create(url)
       await Recipe_Ingredient.create(url, items)
+      if (created) {
+        recipesParsed++;
+      }
     })
+
+    const minutesAndSeconds = seconds => {
+      const minutes = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${minutes} minutes ${secs} seconds`;
+    }
 
     crawler.on("idle", async function () {
       const elapsed = (Date.now() - timer) / 1000;
+      laps.push(elapsed);
       timer = Date.now();
       // idle is fired when the crawler's queue is empty and it is no longer waiting on any responses.
-      console.log(`page parsed in ${elapsed} second(s). total pages parsed: ${currentPage - 1}`)
+      console.log(`page parsed in ${elapsed} seconds
+pages parsed: ${currentPage - 1}
+recipes parsed: ${recipesParsed}
+average parse time: ${mean(laps)} seconds
+total time: ${minutesAndSeconds(sum(laps))}`)
       try {
         const nextPage = await axios.get(PAGED_URL + currentPage);
         await Store.set('latest_read_page', currentPage);
