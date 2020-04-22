@@ -33,7 +33,7 @@ async function init() {
   app.get('/ingredients', async (req, res) => {
     const ingredients = await Ingredient.all()
     return res.json(JSON.stringify(ingredients))
-  });
+  })
 
   app.get('/search', (req, res) => {
     let ingredients = req.query.ingredient
@@ -47,7 +47,7 @@ async function init() {
     const recipes = Trie.findRecipesByIngredients(ingredients)
     // console.log({ recipes })
     return res.json(JSON.stringify(recipes))
-  });
+  })
 
   app.post('/rename', async (req, res) => {
     const { oldName, newName } = req.query
@@ -58,7 +58,19 @@ async function init() {
     } else {
       res.status(500).end()
     }
-  });
+  })
+
+  app.delete('/item/:item', async (req, res, next) => {
+    try {
+      const { item } = req.params;
+      await Recipe_Ingredient.deleteIngredient(item);
+      res.status(200).end()
+    }
+    catch (err) {
+      res.status(500).end()
+      next(err)
+    }
+  })
 
   app.listen(3000, () => {
     console.log(`api server is now listening on port 3000`)

@@ -9,9 +9,9 @@ const Parser = require("./Parser")
 const { Recipe, Ingredient, Recipe_Ingredient, Store } = require('./common/models')
 const { knex } = require('./common/config');
 
-const sum = arr => arr.reduce((total, val) => total + val)
+const sum = arr => (arr.reduce((total, val) => total + val)).toFixed(2)
 
-const mean = arr => sum(arr) / arr.length
+const mean = arr => (sum(arr) / arr.length).toFixed(2)
 
 /*
   TODO:
@@ -58,7 +58,6 @@ async function init() {
 
     crawler.on("crawled", async function (url, $) {
       const { ingredients, description, image, title } = parser.parse($);
-      // NEED TO COMPLETE REFACTORING THE PARSER AND MODELS
       const items = []; // ingredients minus the quantities
       ingredients.forEach(async ([qty, ing]) => {
         items.push(ing);
@@ -69,8 +68,15 @@ async function init() {
         await Ingredient.create(ing)  
       })
 
-      const created = await Recipe.create(url)
+      const created = await Recipe.create({
+        url,
+        image,
+        description,
+        title
+      })
+
       await Recipe_Ingredient.create(url, items)
+      
       if (created) {
         recipesParsed++;
       }
@@ -78,7 +84,7 @@ async function init() {
 
     const minutesAndSeconds = seconds => {
       const minutes = Math.floor(seconds / 60);
-      const secs = seconds % 60;
+      const secs = (seconds % 60).toFixed(2);
       return `${minutes} minutes ${secs} seconds`;
     }
 

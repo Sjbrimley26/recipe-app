@@ -32,8 +32,21 @@ const renameIngredient = async (oldName, newName) => {
   }
 }
 
+const deleteIngredient = async ingredient => {
+  try {
+    await knex(TABLE_NAME).where({ ingredient }).del();
+    await knex('ingredient').where({ item: ingredient }).del()
+    return true;
+  }
+  catch (err) {
+    console.err('error deleting ingredient', err.message, err.stack);
+    return false;
+  }
+}
+
 module.exports = {
   all,
   create,
-  renameIngredient
+  renameIngredient,
+  deleteIngredient
 }

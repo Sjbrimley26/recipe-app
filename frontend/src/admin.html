@@ -30,9 +30,19 @@
             .then(res => console.log(res.status))
             .catch(err => console.err(err.message))
         })
+        const deleter = document.createElement('button');
+        deleter.textContent = 'Delete'
+        deleter.addEventListener('click', _ => {
+          const item = input.value;
+          const req = `/item/${item}`
+          fetch(req, { method: 'DELETE' })
+            .then(res => console.log(res.status))
+            .catch(err => console.err(err.message))
+        })
         div.appendChild(label)
         div.appendChild(input)
         div.appendChild(button)
+        div.appendChild(deleter)
         body.appendChild(div)
       })
     })
