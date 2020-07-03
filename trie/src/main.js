@@ -1,7 +1,7 @@
 const express = require('express')
 const RT = require('./RecipeTrie')
 const { knex } = require('./common/config')
-const { Recipe_Ingredient, Ingredient } = require('./common/models')
+const { Recipe_Ingredient, Ingredient, Recipe } = require('./common/models')
 
 const Trie = new RT();
 
@@ -35,7 +35,7 @@ async function init() {
     return res.json(JSON.stringify(ingredients))
   })
 
-  app.get('/search', (req, res) => {
+  app.get('/search', async (req, res) => {
     let ingredients = req.query.ingredient
     if (!ingredients) {
       return res.json(JSON.stringify([]))
@@ -44,7 +44,8 @@ async function init() {
       ingredients = [ingredients]
     }
     
-    const recipes = Trie.findRecipesByIngredients(ingredients)
+    const urls = Trie.findRecipesByIngredients(ingredients)
+    const recipes = await knex('recipe').whereIn('url', urls)
     // console.log({ recipes })
     return res.json(JSON.stringify(recipes))
   })

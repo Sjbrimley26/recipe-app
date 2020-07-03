@@ -7,89 +7,61 @@
   <link rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@7.2.0/dist/css/autoComplete.min.css">
   <title>Home Page</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      contain: content;
+    }
+    body, html {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    #selectedIngredients {
+      display: inline-flex;
+      flex-direction: column;
+      width: 27%;
+      margin: 0;
+      overflow-y: auto;
+    }
+    .ingredient {
+      display: flex;
+    }
+    .ingredient button {
+      justify-self: flex-end;
+    }
+
+    #recipesFound {
+      display: inline-flex;
+      flex-direction: column;
+      width: 70%;
+      margin: 0;
+      overflow-y: auto;
+    }
+    .recipe {
+      display: grid;
+      grid-template-columns: 160px 160px auto;
+      height: 80px;
+    }
+    .recipe img {
+      height: 100%;
+      width: 100%;
+    }
+    .recipe * {
+      align-self: center;
+    }
+  </style>
 </head>
-<body>
-  <input id="autoComplete" tabindex="1">
-  <button id="submit">Search</button>
-  <div id="selectedIngredients"></div>
+<body> 
+  <div id="selectedIngredients">
+    <input id="autoComplete" tabindex="1">
+    <button id="submit">Search</button>
+  </div>
   <div id="recipesFound"></div>
   <script src="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@7.2.0/dist/js/autoComplete.min.js"></script>
 </body>
-<script>
-  const selectedIngredients = document.getElementById('selectedIngredients');
-  const recipesFound = document.getElementById('recipesFound')
-  const selected = new Set();
-  const submit = document.getElementById('submit');
-
-  submit.addEventListener('click', e => {
-    const ingredients = [...selected.values()].sort();
-    const req = ('/search?' + ingredients.map(i => `ingredient=${encodeURIComponent(i)}`).join('&'))
-    console.log({ req, ingredients });
-    fetch(req).then(res => res.json()).then(json => {
-      const recipes = JSON.parse(json);
-      while (recipesFound.firstChild) {
-        recipesFound.removeChild(recipesFound.firstChild)
-      }
-      recipes.forEach(url => {
-        const p = document.createElement('p');
-        p.textContent = url;
-        recipesFound.appendChild(p)
-      })
-    })
-  })
-
-  fetch('/ingredients')
-    .then(res => res.json())
-    .then(json => {
-      const ingredients = JSON.parse(json);
-      new autoComplete({
-        data: {
-          src: ingredients,
-          cache: true
-        },
-        placeHolder: "Ingredients...",
-        debounce: 300,
-        threshold: 2,
-        onSelection: feedback => {
-          const ingredient = feedback.selection.value;
-          if (selected.has(ingredient)) {
-            return;
-          }
-          const p = document.createElement('p')
-          p.textContent = ingredient;
-          const cancel = document.createElement('button');
-          cancel.textContent = 'Remove from list';
-          cancel.addEventListener('click', _ => {
-            selected.delete(ingredient);
-            selectedIngredients.removeChild(p);
-          })
-          p.appendChild(cancel);
-          selectedIngredients.appendChild(p);
-          selected.add(ingredient)
-        },
-        resultsList: {                    
-          render: true,
-          container: source => {
-            source.setAttribute("id", "found_ingredients");
-          },
-          destination: document.querySelector("#autoComplete"),
-          position: "afterend",
-          element: "ul"
-        },
-        resultItem: {
-          content: (data, source) => {
-            source.innerHTML = data.match;
-          },
-          element: "li"
-        },
-        maxResults: 10,
-        sort: (a, b) => {
-          if (a.match < b.match) return -1;
-          if (a.match > b.match) return 1;
-          return 0;
-        },
-      })
-    })
-
-</script>
+<script src="./index.js"></script>
 </html>

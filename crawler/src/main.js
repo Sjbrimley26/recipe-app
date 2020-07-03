@@ -13,6 +13,13 @@ const sum = arr => (arr.reduce((total, val) => total + val)).toFixed(2)
 
 const mean = arr => (sum(arr) / arr.length).toFixed(2)
 
+const minutesAndSeconds = milliseconds => {
+  const seconds = milliseconds / 1000;
+  const minutes = Math.floor(seconds / 60);
+  const secs = (seconds % 60).toFixed(2);
+  return `${minutes} minutes ${secs} seconds`;
+}
+
 /*
   TODO:
     Right now when you stop and re-start the crawler, it attempts to grab recipes from the last 
@@ -25,12 +32,12 @@ const mean = arr => (sum(arr) / arr.length).toFixed(2)
 
 const crawler = new Crawler({
   maxCallsPerMinute: 120,
-  maxNumberofConnections: 1
+  maxNumberofConnections: 5
 })
 
 const parser = new Parser()
 
-const BASE_URL = 'https://www.allrecipes.com/recipes/'
+const BASE_URL = 'https://www.allrecipes.com/'
 const PAGED_URL = BASE_URL + '?page=' // max page is somewhere in the range of 3500  - 3600
 
 function errorHandler(err) {
@@ -58,6 +65,8 @@ async function init() {
 
     crawler.on("crawled", async function (url, $) {
       const { ingredients, description, image, title } = parser.parse($);
+      if (ingredients.length == 0) return;
+      console.log(`parsing ${url}!`)
       const items = []; // ingredients minus the quantities
       ingredients.forEach(async ([qty, ing]) => {
         items.push(ing);
@@ -80,14 +89,21 @@ async function init() {
       if (created) {
         recipesParsed++;
       }
+      let currentTime = Date.now();
+      let elapsed = currentTime - timer;
+      laps.push(elapsed)
+      let avg = minutesAndSeconds(mean(laps))
+      let total = minutesAndSeconds(sum(laps))
+      console.log('url parsed', {
+        page: minutesAndSeconds(elapsed),
+        average: avg,
+        total: total,
+        page_count: laps.length
+      })
+      timer = Date.now()
     })
 
-    const minutesAndSeconds = seconds => {
-      const minutes = Math.floor(seconds / 60);
-      const secs = (seconds % 60).toFixed(2);
-      return `${minutes} minutes ${secs} seconds`;
-    }
-
+    /*
     crawler.on("idle", async function () {
       const elapsed = (Date.now() - timer) / 1000;
       laps.push(elapsed);
@@ -114,6 +130,7 @@ total time: ${minutesAndSeconds(sum(laps))}`)
         errorHandler(err);
       }
     })
+    */
 
     crawler.on("error", e => {
       console.error('error occured during crawl')
@@ -122,6 +139,7 @@ total time: ${minutesAndSeconds(sum(laps))}`)
 
     console.log('beginning crawl')
 
+    /*
     let firstPage = BASE_URL;
     currentPage++;
     if (currentPage !== 2) {
@@ -130,6 +148,8 @@ total time: ${minutesAndSeconds(sum(laps))}`)
     firstPage = await axios.get(firstPage);
     const urls = parseUrlsFromRecipesPage(firstPage);
     urls.filter(u => !alreadyParsedUrls.includes(u)).forEach(url => crawler.enqueue(url));
+    */
+   crawler.recursiveScrape(BASE_URL)
   }
   catch (err) {
     console.error("error occured during crawler initialization")

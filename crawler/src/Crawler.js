@@ -5,10 +5,12 @@ const EventEmitter = require("events").EventEmitter;
 
 function Crawler ({ 
   maxNumberofConnections,
-  maxCallsPerMinute 
+  maxCallsPerMinute,
+  filter
 } = {
   maxNumberofConnections: 1,
-  maxCallsPerMinute: 30
+  maxCallsPerMinute: 30,
+  filter: _ => true
 }) {
   EventEmitter.call(this);
   this._maxNumberofConnections = maxNumberofConnections;
@@ -16,6 +18,7 @@ function Crawler ({
   this._queue = new Queue();
   this._currentConnections = 0;
   this._crawledRecently = 0;
+  this.filter = filter;
 
   this.on("crawled", function () {
     if (!this._queue.isEmpty() && this._currentConnections < this._maxNumberofConnections) {
@@ -68,6 +71,38 @@ Crawler.prototype._crawl = async function (url) {
     this._currentConnections -= 1;
     this.enqueue(url);
   }
+}
+
+const internalLinkFilter = baseUrl => url => url.includes(baseUrl) // filter outbound links
+
+Crawler.prototype.recursiveScrape = async function (baseUrl) {
+  const searched = new Set()
+  const homepage = await axios.get('https://www.allrecipes.com/?page=2')
+  const $ = cheerio.load(homepage.data)
+
+  const enqueueBatch = $ => {
+    const links =
+      $('a')
+      .toArray()
+      .map(a => a.attribs.href)
+      .filter(Boolean)
+      .filter(internalLinkFilter(baseUrl))
+      .filter(url => url.includes('/recipe')) // PROJECT SPECIFIC
+
+    // console.log(links.length, 'links queued')
+
+    links.forEach(url => {
+      if (searched.has(url)) return;
+      this.enqueue(url)
+      searched.add(url)
+    })
+  }
+
+  enqueueBatch($)
+
+  this.on('crawled', async (url, $) => {
+    enqueueBatch($)
+  })
 }
 
 module.exports = Crawler;
