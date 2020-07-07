@@ -23,7 +23,7 @@ const getOGContent = $ => {
 
 Parser.prototype.parse = function ($) {
   const { url, title, description } = getOGContent($); // didn't work for the image
-  // console.log(`parsing ${url}`)
+  // console.log(`Parser: parsing ${url}`)
   let ret = [];
   let noresults = { ingredients: [], url, title, description, image: undefined }
   const ld = $('script[type="application/ld+json"]');
@@ -63,7 +63,7 @@ Parser.prototype.parse = function ($) {
   }
   const recipeSchema = usingLD ? Object.values(schema).find(sch => sch['@type'] == 'Recipe') : null;
   if (recipeSchema == undefined && usingLD) {
-    // console.log('no recipe here', url);
+    console.log('no recipe here', url);
     return noresults;
   }
   const ingredientProps = [

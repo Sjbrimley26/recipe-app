@@ -75,9 +75,29 @@ Crawler.prototype._crawl = async function (url) {
 
 const internalLinkFilter = baseUrl => url => url.includes(baseUrl) // filter outbound links
 
-Crawler.prototype.recursiveScrape = async function (baseUrl) {
+Crawler.prototype.recursiveScrape = async function (url) {
+  const ignore = [
+    'mailto:',
+    'sms:',
+    'facebook',
+    'twitter',
+    'pinterest',
+    'reviews'
+  ];
+
+  const ignoreFilter = url => {
+    for (let bad of ignore) {
+      if (url.includes(bad)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  const Url = new URL(url)
+  const baseUrl = Url.hostname;
   const searched = new Set()
-  const homepage = await axios.get('https://www.allrecipes.com/?page=2')
+  const homepage = await axios.get(url)
   const $ = cheerio.load(homepage.data)
 
   const enqueueBatch = $ => {
@@ -86,16 +106,30 @@ Crawler.prototype.recursiveScrape = async function (baseUrl) {
       .toArray()
       .map(a => a.attribs.href)
       .filter(Boolean)
+      .filter(this.filter)
       .filter(internalLinkFilter(baseUrl))
+      .filter(ignoreFilter)
       .filter(url => url.includes('/recipe')) // PROJECT SPECIFIC
 
-    // console.log(links.length, 'links queued')
+    const ogLen = this._queue.length;
 
     links.forEach(url => {
       if (searched.has(url)) return;
       this.enqueue(url)
       searched.add(url)
     })
+
+    const qlen = this._queue.length;
+    console.log(`${qlen - ogLen} links found`);
+    console.log(`queue length: ${qlen}`);
+    if (qlen == 0) {
+      axios.get('https://' + baseUrl)
+        .then(retry => enqueueBatch(cheerio.load(retry.data)))
+        .catch(err => console.log('retry failed haha', err.message, err.stack))
+    }
+    // const { heapUsed } = process.memoryUsage();
+    // console.log({ heapUsed });
+    
   }
 
   enqueueBatch($)

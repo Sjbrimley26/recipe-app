@@ -30,11 +30,6 @@ const minutesAndSeconds = milliseconds => {
     I don't really know what a checksum is haha.
 */
 
-const crawler = new Crawler({
-  maxCallsPerMinute: 120,
-  maxNumberofConnections: 5
-})
-
 const parser = new Parser()
 
 const BASE_URL = 'https://www.allrecipes.com/'
@@ -50,7 +45,7 @@ const laps = [];
 async function init() {
   try  {
     let crawlInProgress = await Store.has('latest_read_page');
-    let currentPage = 1;
+    let currentPage = BASE_URL;
     if (crawlInProgress) {
       currentPage = await Store.get('latest_read_page');
     }
@@ -58,15 +53,29 @@ async function init() {
     const existingIngredients = dbChecks[0].map(i => i.item)
     const alreadyParsedUrls = dbChecks[1].map(i => i.url)
     let recipesParsed = alreadyParsedUrls.length;
+    
     const dups = new Set()
     existingIngredients.forEach(i => dups.add(i))
+
+    const dupRecipes = new Set()
+    alreadyParsedUrls.forEach(i => dupRecipes.add(i))
+    const dupChecker = url => !dupRecipes.has(url)
+
+    const crawler = new Crawler({
+      maxCallsPerMinute: 120,
+      maxNumberofConnections: 10,
+      filter: dupChecker
+    })
 
     let timer = Date.now();
 
     crawler.on("crawled", async function (url, $) {
+      if (dupRecipes.has(url)) return console.log('skipping dup -- should never see this haha');
+      // console.log(`parsing ${url}`);
+      dupRecipes.add(url);
       const { ingredients, description, image, title } = parser.parse($);
-      if (ingredients.length == 0) return;
-      console.log(`parsing ${url}!`)
+      if (ingredients.length == 0) return console.log('no ingredients found');
+      // console.log(`unto the next step`)
       const items = []; // ingredients minus the quantities
       ingredients.forEach(async ([qty, ing]) => {
         items.push(ing);
@@ -88,6 +97,7 @@ async function init() {
       
       if (created) {
         recipesParsed++;
+        await Store.set('latest_read_page', url);
       }
       let currentTime = Date.now();
       let elapsed = currentTime - timer;
@@ -103,53 +113,14 @@ async function init() {
       timer = Date.now()
     })
 
-    /*
-    crawler.on("idle", async function () {
-      const elapsed = (Date.now() - timer) / 1000;
-      laps.push(elapsed);
-      timer = Date.now();
-      // idle is fired when the crawler's queue is empty and it is no longer waiting on any responses.
-      console.log(`page parsed in ${elapsed} seconds
-pages parsed: ${currentPage - 1}
-recipes parsed: ${recipesParsed}
-average parse time: ${mean(laps)} seconds
-total time: ${minutesAndSeconds(sum(laps))}`)
-      try {
-        const nextPage = await axios.get(PAGED_URL + currentPage);
-        await Store.set('latest_read_page', currentPage);
-        currentPage++;
-        if (currentPage === 3501) {
-          console.log('parsing complete')
-          await knex.destroy();
-          process.exit(0)
-        }
-        const urls = parseUrlsFromRecipesPage(nextPage);
-        urls.filter(u => !alreadyParsedUrls.includes(u)).forEach(url => crawler.enqueue(url));
-      } catch (err) {
-        console.error('error fetching next page');
-        errorHandler(err);
-      }
-    })
-    */
-
     crawler.on("error", e => {
       console.error('error occured during crawl')
       errorHandler(e)
     })
 
-    console.log('beginning crawl')
+    console.log(`beginning crawl, starting with ${currentPage}`);
 
-    /*
-    let firstPage = BASE_URL;
-    currentPage++;
-    if (currentPage !== 2) {
-      firstPage = PAGED_URL + currentPage;
-    }
-    firstPage = await axios.get(firstPage);
-    const urls = parseUrlsFromRecipesPage(firstPage);
-    urls.filter(u => !alreadyParsedUrls.includes(u)).forEach(url => crawler.enqueue(url));
-    */
-   crawler.recursiveScrape(BASE_URL)
+    crawler.recursiveScrape(currentPage)
   }
   catch (err) {
     console.error("error occured during crawler initialization")
